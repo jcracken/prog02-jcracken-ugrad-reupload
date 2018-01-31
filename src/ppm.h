@@ -15,10 +15,10 @@ class ppm {
     int width;
     int height;
     int maxVal;
-    void writeData(std::string name);
   public:
     ppm();
     void readData(std::string name);
+    void writeData(std::string name);
     unsigned char* returnData();
     int returnWidth();
     int returnHeight();
