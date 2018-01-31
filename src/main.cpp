@@ -86,6 +86,22 @@ void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y){
 	SDL_RenderCopy(ren, tex, NULL, &dst);
 }
 
+void readRGBE(){
+
+}
+
+void writeRGBE(){
+
+}
+
+void toneMapRGBE(){
+
+}
+
+void toneMapPPM(){
+	
+}
+
 ///
 /// Main function.  Initializes an SDL window, renderer, and texture,
 /// and then goes into a loop to listen to events and draw the texture.
