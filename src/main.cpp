@@ -86,11 +86,6 @@ void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y){
 	SDL_RenderCopy(ren, tex, NULL, &dst);
 }
 
-
-
-
-
-
 ///
 /// Main function.  Initializes an SDL window, renderer, and texture,
 /// and then goes into a loop to listen to events and draw the texture.
@@ -101,8 +96,6 @@ void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y){
 ///
 
 int main(int argc, char** argv) {
-  //Integers specifying the width (number of columns) and height (number
-  //of rows) of the image
 
   //Start up SDL and make sure it went ok
 	if (SDL_Init(SDL_INIT_VIDEO) != 0){
@@ -131,19 +124,19 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	//The textures we'll be using
+	//The texture we'll be using
 	SDL_Texture *imageTexture;
 
-  //Initialize the textures.  SDL_PIXELFORMAT_RGB24 specifies 3 bytes per
+  //Initialize the texture.  SDL_PIXELFORMAT_RGB24 specifies 3 bytes per
   //pixel, one per color channel
 	imageTexture = SDL_CreateTexture(rendererImage,SDL_PIXELFORMAT_RGB24,SDL_TEXTUREACCESS_STATIC,image->returnWidth(),image->returnHeight());
-  //Copy the raw data array into the textures.
+  //Copy the raw data array into the texture.
 	SDL_UpdateTexture(imageTexture, NULL, image->returnData(), 3*image->returnWidth());
   if (imageTexture == NULL){
     logSDLError(std::cout, "CreateImageTextureFromSurface");
   }
 
-  //Make sure they both loaded ok
+  //Make sure it loaded ok
 	if (imageTexture == NULL){
     SDL_DestroyTexture(imageTexture);
     SDL_DestroyRenderer(rendererImage);
@@ -151,7 +144,7 @@ int main(int argc, char** argv) {
 		SDL_Quit();
 		return 1;
 	}
-	//render loaded texture here, as we won't be updating every frame
+	//render loaded texture here
 	renderTexture(imageTexture, rendererImage, 0, 0);
 	//Update the screen
 	SDL_RenderPresent(rendererImage);
