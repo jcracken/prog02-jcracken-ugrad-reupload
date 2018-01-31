@@ -42,6 +42,7 @@
 //include SDL2 libraries
 #include <SDL.h>
 #include "ppm.h"
+#include "rgbe.h"
 
 //C++ includes
 #include <iostream>
@@ -102,8 +103,6 @@ void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y){
 int main(int argc, char** argv) {
   //Integers specifying the width (number of columns) and height (number
   //of rows) of the image
-  int num_cols = 480;
-  int num_rows = 270;
 
   //Start up SDL and make sure it went ok
 	if (SDL_Init(SDL_INIT_VIDEO) != 0){
@@ -118,27 +117,14 @@ int main(int argc, char** argv) {
 	}
 	//read in image data
 	image->readData(argv[1]);
-	SDL_Window *window = SDL_CreateWindow("Basic SDL Test", 100, 100, num_cols, num_rows, SDL_WINDOW_SHOWN);
-	if (window == NULL){
-		logSDLError(std::cout, "CreateWindow");
-		SDL_Quit();
-		return 1;
-	}
-	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-	if (renderer == NULL){
-		logSDLError(std::cout, "CreateRenderer");
-    SDL_DestroyWindow(window);
-		SDL_Quit();
-		return 1;
-	}
 	SDL_Window *windowImage = SDL_CreateWindow("Loaded Image", 100, 100, image->returnWidth(), image->returnHeight(), SDL_WINDOW_SHOWN);
-	if (window == NULL){
+	if (windowImage == NULL){
 		logSDLError(std::cout, "CreateWindowImage");
 		SDL_Quit();
 		return 1;
 	}
 	SDL_Renderer *rendererImage = SDL_CreateRenderer(windowImage, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-	if (renderer == NULL){
+	if (rendererImage == NULL){
 		logSDLError(std::cout, "CreateRendererImage");
     SDL_DestroyWindow(windowImage);
 		SDL_Quit();
@@ -146,43 +132,18 @@ int main(int argc, char** argv) {
 	}
 
 	//The textures we'll be using
-	SDL_Texture *background;
 	SDL_Texture *imageTexture;
-
-  //A raw data array of characters.  Each column is drawn using the same
-  //color that is a grayscale ramp from the leftmost to rightmost pixel.
-  unsigned char* data = new unsigned char[num_cols*num_rows*3];
-  //r is row, c is column, and ch is channel
-  for (int r=0; r<num_rows; r++) {
-    for (int c=0; c<num_cols; c++) {
-      for (int ch=0; ch<3; ch++) {
-        data[3*(r*num_cols + c) + ch] = 255*float(c)/num_cols;
-      }
-    }
-  }
 
   //Initialize the textures.  SDL_PIXELFORMAT_RGB24 specifies 3 bytes per
   //pixel, one per color channel
-  background = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGB24,SDL_TEXTUREACCESS_STATIC,num_cols,num_rows);
 	imageTexture = SDL_CreateTexture(rendererImage,SDL_PIXELFORMAT_RGB24,SDL_TEXTUREACCESS_STATIC,image->returnWidth(),image->returnHeight());
   //Copy the raw data array into the textures.
-  SDL_UpdateTexture(background, NULL, data, 3*num_cols);
-  if (background == NULL){
-    logSDLError(std::cout, "CreateTextureFromSurface");
-  }
 	SDL_UpdateTexture(imageTexture, NULL, image->returnData(), 3*image->returnWidth());
   if (imageTexture == NULL){
     logSDLError(std::cout, "CreateImageTextureFromSurface");
   }
 
   //Make sure they both loaded ok
-	if (background == NULL){
-    SDL_DestroyTexture(background);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-		SDL_Quit();
-		return 1;
-	}
 	if (imageTexture == NULL){
     SDL_DestroyTexture(imageTexture);
     SDL_DestroyRenderer(rendererImage);
@@ -209,7 +170,6 @@ int main(int argc, char** argv) {
     const Uint64 start = SDL_GetPerformanceCounter();
 
     //Clear the screen
-    SDL_RenderClear(renderer);
 		SDL_RenderClear(rendererImage);
 
 		//Event Polling
@@ -227,33 +187,8 @@ int main(int argc, char** argv) {
           default:
             break;
         }
-      } else if (event.type == SDL_MOUSEBUTTONUP ) {
-        if (event.button.button == SDL_BUTTON_LEFT)
-          leftMouseButtonDown = false;
-
-      } else if (event.type == SDL_MOUSEBUTTONDOWN ) {
-        if (event.button.button == SDL_BUTTON_LEFT) {
-          leftMouseButtonDown = true;
-        }
-      } else if (event.type == SDL_MOUSEMOTION ) {
-        if (leftMouseButtonDown)
-        {
-          int mouseX = event.motion.x;
-          int mouseY = event.motion.y;
-
-          data[3*(mouseY*num_cols + mouseX) + 0] = 255;
-          data[3*(mouseY*num_cols + mouseX) + 1] = 0;
-          data[3*(mouseY*num_cols + mouseX) + 2] = 0;
-        }
       }
     }
-
-    //Update the texture, assuming data has changed.
-    SDL_UpdateTexture(background, NULL, data, 3*num_cols);
-    //display the texture on the screen
-    renderTexture(background, renderer, 0, 0);
-    //Update the screen
-    SDL_RenderPresent(renderer);
 
     //Display the frame rate to stdout
     const Uint64 end = SDL_GetPerformanceCounter();
@@ -266,10 +201,6 @@ int main(int argc, char** argv) {
 
   //After the loop finishes (when the window is closed, or escape is
   //pressed, clean up the data that we allocated.
-  delete[] data;
-  SDL_DestroyTexture(background);
-  SDL_DestroyRenderer(renderer);
-  SDL_DestroyWindow(window);
 	SDL_DestroyTexture(imageTexture);
 	SDL_DestroyRenderer(rendererImage);
 	SDL_DestroyWindow(windowImage);
