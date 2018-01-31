@@ -94,12 +94,62 @@ void writeRGBE(){
 
 }
 
-void toneMapRGBE(){
-
+void toneMap(unsigned char* data, float gamma, int size){
+	float* lumData = new float[size];
+	float* lum2 = new float[size];
+	float scale;
+	int i = 0;
+	unsigned char r, g, b.
+	for(i = 0; i < size; i++){
+		r = data[3 * i];
+		g = data[(3 * i) + 1];
+		b = data[(3 * i) + 2];
+		lumData[i] = (1.0 / 61.0) * (20.0 * r + 40.0 * g + b);
+		lum2[i] = exp(gamma * log(lumData[i]));
+		scale = lum2[i] / lumData[i];
+		r = r * scale;
+		if(r > 1.0) r = 1.0;
+		else if (r < 0.0) r = 0.0;
+		g = g * scale;
+		if(g > 1.0) g = 1.0;
+		else if (g < 0.0) g = 0.0;
+		b = b * scale;
+		if(b > 1.0) b = 1.0;
+		else if (b < 0.0) b = 0.0;
+		data[3 * i] = r;
+		data[(3 * i) + 1] = g;
+		data[(3 * i) + 2] = b;
+	}
 }
 
-void toneMapPPM(){
-	
+void toneMapFiltered(unsigned char* data, float gamma, int size){
+	float* lumData = new float[size];
+	float* lum2 = new float[size];
+	float scale, B, S;
+	int i = 0;
+	unsigned char r, g, b.
+	for(i = 0; i < size; i++){
+		r = data[3 * i];
+		g = data[(3 * i) + 1];
+		b = data[(3 * i) + 2];
+		lumData[i] = (1.0 / 61.0) * (20.0 * r + 40.0 * g + b);
+		B = log(lumData[i]); //convolution
+		S = log(lumData[i]) - B;
+		lum2[i] = exp(gamma * B + S); 
+		scale = lum2[i] / lumData[i];
+		r = r * scale;
+		if(r > 1.0) r = 1.0;
+		else if (r < 0.0) r = 0.0;
+		g = g * scale;
+		if(g > 1.0) g = 1.0;
+		else if (g < 0.0) g = 0.0;
+		b = b * scale;
+		if(b > 1.0) b = 1.0;
+		else if (b < 0.0) b = 0.0;
+		data[3 * i] = r;
+		data[(3 * i) + 1] = g;
+		data[(3 * i) + 2] = b;
+	}
 }
 
 ///
