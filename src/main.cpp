@@ -171,41 +171,65 @@ void toneMapFiltered(float* data, float gamma, int size){
 
 int main(int argc, char** argv) {
 
+	bool filetype;
+
   //Start up SDL and make sure it went ok
 	if (SDL_Init(SDL_INIT_VIDEO) != 0){
 		logSDLError(std::cout, "SDL_Init");
 		return 1;
 	}
 	//setup for loading image; create new object and check commandline args
-	ppm* image = new ppm();
-	if(argc < 2){
-		cout << "usage: prog01 filename" << endl;
+	if(argc < 4){
+		cout << "usage: prog02 input output filetype" << endl;
 		exit(EXIT_FAILURE);
 	}
+	if(argv[3] == "ppm" || argv[3] == "PPM"){
+		ppm* image = new ppm();
+		filetype = true;
+	} else {
+		int width, height;
+		float* data = readRGBE(argv[2], &width, &height);
+		filetype = false;
+	}
 	//read in image data
-	image->readData(argv[1]);
-	SDL_Window *windowImage = SDL_CreateWindow("Loaded Image", 100, 100, image->returnWidth(), image->returnHeight(), SDL_WINDOW_SHOWN);
-	if (windowImage == NULL){
-		logSDLError(std::cout, "CreateWindowImage");
-		SDL_Quit();
-		return 1;
-	}
-	SDL_Renderer *rendererImage = SDL_CreateRenderer(windowImage, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-	if (rendererImage == NULL){
-		logSDLError(std::cout, "CreateRendererImage");
-    SDL_DestroyWindow(windowImage);
-		SDL_Quit();
-		return 1;
-	}
+	if(filetype){
+	 image->readData(argv[1]);
+	 SDL_Window *windowImage = SDL_CreateWindow("Loaded Image", 100, 100, image->returnWidth(), image->returnHeight(), SDL_WINDOW_SHOWN);
+	 if (windowImage == NULL){
+		 logSDLError(std::cout, "CreateWindowImage");
+		 SDL_Quit();
+		 return 1;
+	 }
+ } else {
+	 SDL_Window *windowImage = SDL_CreateWindow("Loaded Image", 100, 100, width, height, SDL_WINDOW_SHOWN);
+	 if (windowImage == NULL){
+		 logSDLError(std::cout, "CreateWindowImage");
+		 SDL_Quit();
+		 return 1;
+	 }
+ }
+ SDL_Renderer *rendererImage = SDL_CreateRenderer(windowImage, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+ if (rendererImage == NULL){
+	 logSDLError(std::cout, "CreateRendererImage");
+	 SDL_DestroyWindow(windowImage);
+	 SDL_Quit();
+	 return 1;
+ }
 
 	//The texture we'll be using
 	SDL_Texture *imageTexture;
 
   //Initialize the texture.  SDL_PIXELFORMAT_RGB24 specifies 3 bytes per
   //pixel, one per color channel
-	imageTexture = SDL_CreateTexture(rendererImage,SDL_PIXELFORMAT_RGB24,SDL_TEXTUREACCESS_STATIC,image->returnWidth(),image->returnHeight());
-  //Copy the raw data array into the texture.
-	SDL_UpdateTexture(imageTexture, NULL, image->returnData(), 3*image->returnWidth());
+	if(filetype) {
+		imageTexture = SDL_CreateTexture(rendererImage,SDL_PIXELFORMAT_RGB24,SDL_TEXTUREACCESS_STATIC,image->returnWidth(),image->returnHeight());
+  	//Copy the raw data array into the texture.
+		SDL_UpdateTexture(imageTexture, NULL, image->returnData(), 3*image->returnWidth());
+	} else {
+		imageTexture = SDL_CreateTexture(rendererImage,SDL_PIXELFORMAT_RGB24,SDL_TEXTUREACCESS_STATIC,width,height);
+  	//Copy the raw data array into the texture.
+		SDL_UpdateTexture(imageTexture, NULL, data, 3*width);
+	}
   if (imageTexture == NULL){
     logSDLError(std::cout, "CreateImageTextureFromSurface");
   }
