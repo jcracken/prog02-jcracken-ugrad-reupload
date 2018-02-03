@@ -86,15 +86,23 @@ void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y){
 	SDL_RenderCopy(ren, tex, NULL, &dst);
 }
 
-void readRGBE(){
-
+float* readRGBE(string filename, int* width, int* height){
+	FILE* f = fopen(filename,"rb");
+	RGBE_ReadHeader(f, width, height, NULL);
+	float* data = new float[3 * *width * *height];
+	RGBE_ReadPixels_RLE(f, data, *width, *height);
+	fclose(f);
+	return data;
 }
 
-void writeRGBE(){
-
+void writeRGBE(string filename, int width, int height, float* data){
+	FILE* f = fopen(filename,"wb");
+	RGBE_WriteHeader(f, width, height, NULL);
+	RGBE_WritePixels(f, data, width * height);
+	fclose(f);
 }
 
-void toneMap(unsigned char* data, float gamma, int size){
+void toneMap(float* data, float gamma, int size){
 	float* lumData = new float[size];
 	float* lum2 = new float[size];
 	float scale;
@@ -122,7 +130,7 @@ void toneMap(unsigned char* data, float gamma, int size){
 	}
 }
 
-void toneMapFiltered(unsigned char* data, float gamma, int size){
+void toneMapFiltered(float* data, float gamma, int size){
 	float* lumData = new float[size];
 	float* lum2 = new float[size];
 	float scale, B, S;
@@ -135,7 +143,7 @@ void toneMapFiltered(unsigned char* data, float gamma, int size){
 		lumData[i] = (1.0 / 61.0) * (20.0 * r + 40.0 * g + b);
 		B = log(lumData[i]); //convolution
 		S = log(lumData[i]) - B;
-		lum2[i] = exp(gamma * B + S); 
+		lum2[i] = exp(gamma * B + S);
 		scale = lum2[i] / lumData[i];
 		r = r * scale;
 		if(r > 1.0) r = 1.0;
