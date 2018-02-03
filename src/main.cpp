@@ -188,7 +188,8 @@ int main(int argc, char** argv) {
 		filetype = true;
 	} else {
 		int width, height;
-		float* data = readRGBE(argv[2], &width, &height);
+		float* data = readRGBE(argv[1], &width, &height);
+		toneMap(data, 0.5, width * height);
 		filetype = false;
 	}
 	//read in image data
@@ -289,7 +290,6 @@ int main(int argc, char** argv) {
     std::cout << "Frame time: " << seconds * 1000.0 << "ms" << std::endl;
   }
 
-
   //After the loop finishes (when the window is closed, or escape is
   //pressed, clean up the data that we allocated.
 	SDL_DestroyTexture(imageTexture);
@@ -297,6 +297,8 @@ int main(int argc, char** argv) {
 	SDL_DestroyWindow(windowImage);
 	SDL_Quit();
 
+	if(filetype) image->writeData(argv[2]);
+	else writeRGBE(argv[2], width, height, data);
 
   return 0;
 }
