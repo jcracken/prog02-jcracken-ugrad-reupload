@@ -86,6 +86,38 @@ void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y){
 	SDL_RenderCopy(ren, tex, NULL, &dst);
 }
 
+float convolution(float* data, int loc, int width, int height){
+	float tempData[width][height];
+	float kernel[5][5];
+	int i, j, k = 0;
+	int newLocA = loc / width;
+	int newLocB = loc % width;
+	int sum = 0;
+	for(i = 0; i < height; i++){
+		for(j = 0; j < width; j++){
+			kernel[i][j] = 1;
+		}
+	}
+	for(i = 0; i < height; i++){
+		for(j = 0; j < width; j++){
+			tempData[i][j] = data[k];
+			k++;
+		}
+	}
+	for(i = (newLocA - 2); i < (newLocA + 2); i++){
+		for(j = (newLocB - 2); j < (newLocB + 2); j++){
+			if(i < 0 && j < 0) sum = sum + tempData[abs(i)][abs(j)] * kernel[i - newLocA][j - newLocB];
+			else if (i < 0 && j < width) sum = sum + tempData[abs(i)][j] * kernel[i - newLocA][j - newLocB];
+			else if (i < height && j < 0) sum = sum + tempData[i][abs(j)] * kernel[i - newLocA][j - newLocB];
+			else if (i > height && j > width) sum = sum + tempData[(newLocA - i) + height][(newLocB - j) + width] * kernel[i - newLocA][j - newLocB];
+			else if (i > height) sum = sum + tempData[(newLocA - i) + height][j] * kernel[i - newLocA][j - newLocB];
+			else if (j > width) sum = sum + tempData[i][(newLocB - j) + width] * kernel[i - newLocA][j - newLocB];
+			else sum = sum + tempData[i][j] * kernel[i - newLocA][j - newLocB];
+		}
+	}
+	return sum;
+}
+
 float* readRGBE(char* filename, int* width, int* height){
 	FILE* f = fopen(filename,"rb");
 	RGBE_ReadHeader(f, width, height, NULL);
