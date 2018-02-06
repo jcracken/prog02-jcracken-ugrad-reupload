@@ -189,7 +189,7 @@ int main(int argc, char** argv) {
 		filetype = true;
 	} else {
 		int width, height;
-		float* data = readRGBE(argv[1], &width, &height);
+		float* data = readRGBE(argv[1].append(".hdr"), &width, &height);
 		toneMap(data, gamma, width * height);
 		filetype = false;
 	}
