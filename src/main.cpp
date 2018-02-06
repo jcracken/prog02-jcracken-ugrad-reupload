@@ -171,7 +171,8 @@ void toneMapFiltered(float* data, float gamma, int size){
 
 int main(int argc, char** argv) {
 
-	bool filetype;
+	bool filetype, bilinear = false;
+	float gamma = 0.5;
 
   //Start up SDL and make sure it went ok
 	if (SDL_Init(SDL_INIT_VIDEO) != 0){
@@ -189,7 +190,7 @@ int main(int argc, char** argv) {
 	} else {
 		int width, height;
 		float* data = readRGBE(argv[1], &width, &height);
-		toneMap(data, 0.5, width * height);
+		toneMap(data, gamma, width * height);
 		filetype = false;
 	}
 	//read in image data
@@ -276,11 +277,31 @@ int main(int argc, char** argv) {
           case SDLK_ESCAPE:
             quit = true;
             break;
+					case SDLK_LEFT:
+						gamma = gamma - 0.1;
+						if (gamma < 0.0) gamma = 0.0;
+						break;
+					case SDLK_RIGHT:
+						gamma = gamma + 0.1;
+						break;
+					case SDLK_b:
+						if(bilinear) bilinear = false;
+						else bilinear = true;
+						break;
           default:
             break;
         }
       }
     }
+		if(!filetype){
+			if(bilinear) toneMapFiltered(data, gamma, width * height);
+			else toneMap(data, gamma, width * height);
+			SDL_UpdateTexture(imageTexture, NULL, data, 3*width);
+			//render loaded texture here
+			renderTexture(imageTexture, rendererImage, 0, 0);
+			//Update the screen
+			SDL_RenderPresent(rendererImage);
+		}
 
     //Display the frame rate to stdout
     const Uint64 end = SDL_GetPerformanceCounter();
