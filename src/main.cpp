@@ -162,7 +162,7 @@ void toneMap(float* data, float gamma, int size){
 	}
 }
 
-void toneMapFiltered(float* data, float gamma, int size){
+void toneMapFiltered(float* data, float gamma, int size, int width, int height){
 	float* lumData = new float[size];
 	float* lum2 = new float[size];
 	float scale, B, S;
@@ -173,7 +173,7 @@ void toneMapFiltered(float* data, float gamma, int size){
 		g = data[(3 * i) + 1];
 		b = data[(3 * i) + 2];
 		lumData[i] = (1.0 / 61.0) * (20.0 * r + 40.0 * g + b);
-		B = log(lumData[i]); //convolution
+		B = convolution(lumData, i, width, height); //convolution
 		S = log(lumData[i]) - B;
 		lum2[i] = exp(gamma * B + S);
 		scale = lum2[i] / lumData[i];
@@ -317,7 +317,7 @@ int main(int argc, char** argv) {
       }
     }
 		if(!filetype){
-			if(bilinear) toneMapFiltered(data, gamma, width * height);
+			if(bilinear) toneMapFiltered(data, gamma, width * height, width, height);
 			else toneMap(data, gamma, width * height);
 			SDL_UpdateTexture(imageTexture, NULL, data, 3*width);
 			//render loaded texture here
