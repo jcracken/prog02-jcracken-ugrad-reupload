@@ -92,7 +92,7 @@ float convolution(float* data, int loc, int width, int height){
 	int i, j, k = 0;
 	int newLocA = loc / width;
 	int newLocB = loc % width;
-	int sum = 0;
+	float w, sum = 0.0;
 	for(i = 0; i < height; i++){
 		for(j = 0; j < width; j++){
 			kernel[i][j] = 1;
@@ -106,13 +106,18 @@ float convolution(float* data, int loc, int width, int height){
 	}
 	for(i = (newLocA - 2); i < (newLocA + 2); i++){
 		for(j = (newLocB - 2); j < (newLocB + 2); j++){
-			if(i < 0 && j < 0) sum = sum + tempData[abs(i)][abs(j)] * kernel[i - newLocA][j - newLocB];
-			else if (i < 0 && j < width) sum = sum + tempData[abs(i)][j] * kernel[i - newLocA][j - newLocB];
-			else if (i < height && j < 0) sum = sum + tempData[i][abs(j)] * kernel[i - newLocA][j - newLocB];
-			else if (i > height && j > width) sum = sum + tempData[(newLocA - i) + height][(newLocB - j) + width] * kernel[i - newLocA][j - newLocB];
-			else if (i > height) sum = sum + tempData[(newLocA - i) + height][j] * kernel[i - newLocA][j - newLocB];
-			else if (j > width) sum = sum + tempData[i][(newLocB - j) + width] * kernel[i - newLocA][j - newLocB];
-			else sum = sum + tempData[i][j] * kernel[i - newLocA][j - newLocB];
+			w = tempData[newLocA][newLocB] - tempData[i][j];
+			w = w * w;
+			if(w < 0.0) w = 0.0;
+			else if (w > 1.0) w = 1.0;
+			w = exp(-1 * w);
+			if(i < 0 && j < 0) sum = sum + w * tempData[abs(i)][abs(j)] * kernel[i - newLocA][j - newLocB];
+			else if (i < 0 && j < width) sum = sum + w * tempData[abs(i)][j] * kernel[i - newLocA][j - newLocB];
+			else if (i < height && j < 0) sum = sum + w * tempData[i][abs(j)] * kernel[i - newLocA][j - newLocB];
+			else if (i > height && j > width) sum = sum + w * tempData[(newLocA - i) + height][(newLocB - j) + width] * kernel[i - newLocA][j - newLocB];
+			else if (i > height) sum = sum + w * tempData[(newLocA - i) + height][j] * kernel[i - newLocA][j - newLocB];
+			else if (j > width) sum = sum + w * tempData[i][(newLocB - j) + width] * kernel[i - newLocA][j - newLocB];
+			else sum = sum + w * tempData[i][j] * kernel[i - newLocA][j - newLocB];
 		}
 	}
 	return sum;
