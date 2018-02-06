@@ -86,7 +86,7 @@ void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y){
 	SDL_RenderCopy(ren, tex, NULL, &dst);
 }
 
-float* readRGBE(string filename, int* width, int* height){
+float* readRGBE(char* filename, int* width, int* height){
 	FILE* f = fopen(filename,"rb");
 	RGBE_ReadHeader(f, width, height, NULL);
 	float* data = new float[3 * *width * *height];
@@ -95,7 +95,7 @@ float* readRGBE(string filename, int* width, int* height){
 	return data;
 }
 
-void writeRGBE(string filename, int width, int height, float* data){
+void writeRGBE(char* filename, int width, int height, float* data){
 	FILE* f = fopen(filename,"wb");
 	RGBE_WriteHeader(f, width, height, NULL);
 	RGBE_WritePixels(f, data, width * height);
@@ -107,7 +107,7 @@ void toneMap(float* data, float gamma, int size){
 	float* lum2 = new float[size];
 	float scale;
 	int i = 0;
-	unsigned char r, g, b.
+	unsigned char r, g, b;
 	for(i = 0; i < size; i++){
 		r = data[3 * i];
 		g = data[(3 * i) + 1];
@@ -135,7 +135,7 @@ void toneMapFiltered(float* data, float gamma, int size){
 	float* lum2 = new float[size];
 	float scale, B, S;
 	int i = 0;
-	unsigned char r, g, b.
+	unsigned char r, g, b;
 	for(i = 0; i < size; i++){
 		r = data[3 * i];
 		g = data[(3 * i) + 1];
@@ -173,6 +173,9 @@ int main(int argc, char** argv) {
 
 	bool filetype, bilinear = false;
 	float gamma = 0.5;
+	ppm* image = new ppm();
+	int width, height;
+	float* data;
 
   //Start up SDL and make sure it went ok
 	if (SDL_Init(SDL_INIT_VIDEO) != 0){
@@ -185,30 +188,24 @@ int main(int argc, char** argv) {
 		exit(EXIT_FAILURE);
 	}
 	if(argv[3] == "ppm" || argv[3] == "PPM"){
-		ppm* image = new ppm();
 		filetype = true;
 	} else {
-		int width, height;
-		float* data = readRGBE(argv[1].append(".hdr"), &width, &height);
+		data = readRGBE(argv[1], &width, &height);
 		toneMap(data, gamma, width * height);
 		filetype = false;
 	}
 	//read in image data
 	if(filetype){
 	 image->readData(argv[1]);
-	 SDL_Window *windowImage = SDL_CreateWindow("Loaded Image", 100, 100, image->returnWidth(), image->returnHeight(), SDL_WINDOW_SHOWN);
-	 if (windowImage == NULL){
-		 logSDLError(std::cout, "CreateWindowImage");
-		 SDL_Quit();
-		 return 1;
-	 }
- } else {
-	 SDL_Window *windowImage = SDL_CreateWindow("Loaded Image", 100, 100, width, height, SDL_WINDOW_SHOWN);
-	 if (windowImage == NULL){
-		 logSDLError(std::cout, "CreateWindowImage");
-		 SDL_Quit();
-		 return 1;
-	 }
+	 width = image->returnWidth();
+	 height = image->returnHeight();
+	 data = (float*)image->returnData();
+ }
+ SDL_Window *windowImage = SDL_CreateWindow("Loaded Image", 100, 100, width, height, SDL_WINDOW_SHOWN);
+ if (windowImage == NULL){
+	 logSDLError(std::cout, "CreateWindowImage");
+	 SDL_Quit();
+	 return 1;
  }
  SDL_Renderer *rendererImage = SDL_CreateRenderer(windowImage, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
  if (rendererImage == NULL){
@@ -223,15 +220,9 @@ int main(int argc, char** argv) {
 
   //Initialize the texture.  SDL_PIXELFORMAT_RGB24 specifies 3 bytes per
   //pixel, one per color channel
-	if(filetype) {
-		imageTexture = SDL_CreateTexture(rendererImage,SDL_PIXELFORMAT_RGB24,SDL_TEXTUREACCESS_STATIC,image->returnWidth(),image->returnHeight());
-  	//Copy the raw data array into the texture.
-		SDL_UpdateTexture(imageTexture, NULL, image->returnData(), 3*image->returnWidth());
-	} else {
-		imageTexture = SDL_CreateTexture(rendererImage,SDL_PIXELFORMAT_RGB24,SDL_TEXTUREACCESS_STATIC,width,height);
-  	//Copy the raw data array into the texture.
-		SDL_UpdateTexture(imageTexture, NULL, data, 3*width);
-	}
+	imageTexture = SDL_CreateTexture(rendererImage,SDL_PIXELFORMAT_RGB24,SDL_TEXTUREACCESS_STATIC,width,height);
+	//Copy the raw data array into the texture.
+	SDL_UpdateTexture(imageTexture, NULL, data, 3*width);
   if (imageTexture == NULL){
     logSDLError(std::cout, "CreateImageTextureFromSurface");
   }

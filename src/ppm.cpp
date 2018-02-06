@@ -8,7 +8,7 @@ ppm::ppm(){
 }
 //loads in image data from filename argument
 void ppm::readData(std::string name){
-  std::ifstream input(name.append(".ppm"), std::ifstream::in | std::ifstream::binary);
+  std::ifstream input(name, std::ifstream::in | std::ifstream::binary);
   std::string temp;
   int i = 1;
   //verifies file existence
@@ -70,7 +70,7 @@ int ppm::returnMaxVal(){
 }
 //used for debugging
 void ppm::writeData(std::string name){
-  std::ofstream out(name.append(".ppm"), std::ofstream::out | std::ofstream::binary);
+  std::ofstream out(name, std::ofstream::out | std::ofstream::binary);
   //write header
   out << "P6\n" << this->width << " " << this->height << "\n" << this->maxVal << "\n";
   //write pixel data
