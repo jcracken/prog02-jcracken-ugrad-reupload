@@ -187,7 +187,7 @@ int main(int argc, char** argv) {
 		cout << "usage: prog02 input output filetype" << endl;
 		exit(EXIT_FAILURE);
 	}
-	if(argv[3] == "ppm" || argv[3] == "PPM"){
+	if(strcmp(argv[3],"ppm") == 0 || strcmp(argv[3],"PPM") == 0){
 		filetype = true;
 	} else {
 		data = readRGBE(argv[1], &width, &height);
