@@ -1,11 +1,13 @@
-### RGBE File Parsing, Updated
+### Assignment 02
 
-Author: Joshua Levine
+Currently working:
+1. Reading and displaying PPM images
+2. Writing PPMs, both PPM and converted HDR
+3. Tone mapping does *something*
+4. Written questions completed
 
-This repo includes slightly modified code for RGBE file parsing.
-
-The original code is based on [Bruce Walter's Code](http://www.graphics.cornell.edu/~bjw/rgbe.html).
-
-Note, this is modified by:
-* Updates from C to C++ (changing the standard header libraries)
-* Slightly modifying `RGBE_ReadHeader` so as to parse all of the header information until a blank line is reached.
+Not working:
+1. HDR image reading might be broken?
+2. HDR image writing might be broken? (not needed for assigment)
+3. Tone mapping w/o filter gives odd result
+4. Tone mapping w/ filter has a seg fault (think it has to do with edge case management)
