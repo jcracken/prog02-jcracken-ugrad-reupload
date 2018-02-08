@@ -4,7 +4,7 @@ ppm::ppm(){
   this->data = NULL;
   this->width = 0;
   this->height = 0;
-  this->maxVal = 0;
+  this->maxVal = 255;
 }
 //loads in image data from filename argument
 void ppm::readData(std::string name){
@@ -77,4 +77,16 @@ void ppm::writeData(std::string name){
   out.write((char*)this->data, this->width * this->height * 3);
   //close file
   out.close();
+}
+
+void ppm::setData(unsigned char* data){
+  this->data = data;
+}
+
+void ppm::setWidth(int width){
+  this->width = width;
+}
+
+void ppm::setHeight(int height){
+  this->height = height;
 }

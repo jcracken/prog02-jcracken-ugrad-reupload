@@ -23,5 +23,8 @@ class ppm {
     int returnWidth();
     int returnHeight();
     int returnMaxVal();
+    void setData(unsigned char* data);
+    void setWidth(int width);
+    void setHeight(int height);
 };
 #endif

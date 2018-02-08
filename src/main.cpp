@@ -1,44 +1,3 @@
-///
-/// \file main.cpp
-/// \brief SDL Demo Code
-/// \author Joshua A. Levine <josh@email.arizona.edu>
-/// \date 01/15/18
-///
-/// This code provides an introductory demonstration of SDL.  When run, a
-/// small window is displayed that draws an image using an SDL_Texture
-///
-
-
-/*
- ***********************************************************************
-
- Copyright (C) 2018, Joshua A. Levine
- University of Arizona
-
- Permission is hereby granted, free of charge, to any person obtaining
- a copy of this software and associated documentation files (the
- "Software"), to deal in the Software without restriction, including
- without limitation the rights to use, copy, modify, merge, publish,
- distribute, sublicense, and/or sell copies of the Software, and to
- permit persons to whom the Software is furnished to do so, subject to
- the following conditions:
-
- The above copyright notice and this permission notice shall be
- included in all copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
- BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
- ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- SOFTWARE.
-
- ***********************************************************************
- */
-
-
 //include SDL2 libraries
 #include <SDL.h>
 #include "ppm.h"
@@ -139,6 +98,14 @@ void writeRGBE(char* filename, int width, int height, float* data){
 	fclose(f);
 }
 
+unsigned char* scaleToPPM(float* data, int size){
+	unsigned char* newData = new unsigned char[size];
+	for(int i = 0; i < size; i++){
+		newData[i] = (unsigned char)round(data[i] * 255);
+	}
+	return newData;
+}
+
 void toneMap(float* data, float gamma, int size){
 	float* lumData = new float[size];
 	float* lum2 = new float[size];
@@ -150,6 +117,7 @@ void toneMap(float* data, float gamma, int size){
 		g = data[(3 * i) + 1];
 		b = data[(3 * i) + 2];
 		lumData[i] = (1.0 / 61.0) * (20.0 * r + 40.0 * g + b);
+		if(lumData[i] == 0.0) lumData[i] = -500.0;
 		lum2[i] = exp(gamma * log(lumData[i]));
 		scale = lum2[i] / lumData[i];
 		r = r * scale;
@@ -178,6 +146,7 @@ void toneMapFiltered(float* data, float gamma, int size, int width, int height){
 		g = data[(3 * i) + 1];
 		b = data[(3 * i) + 2];
 		lumData[i] = (1.0 / 61.0) * (20.0 * r + 40.0 * g + b);
+		if(lumData[i] == 0.0) lumData[i] = -500.0;
 		B = convolution(lumData, i, width, height); //convolution
 		S = log(lumData[i]) - B;
 		lum2[i] = exp(gamma * B + S);
@@ -209,7 +178,7 @@ void toneMapFiltered(float* data, float gamma, int size, int width, int height){
 int main(int argc, char** argv) {
 
 	bool filetype, bilinear = false;
-	float gamma = 0.5;
+	float gamma = 0.1;
 	ppm* image = new ppm();
 	int width, height;
 	float* data;
@@ -228,17 +197,19 @@ int main(int argc, char** argv) {
 		filetype = true;
 	} else {
 		data = readRGBE(argv[1], &width, &height);
+		writeRGBE("testing.hdr", width, height, data);
 		toneMap(data, gamma, width * height);
 		filetype = false;
 	}
 	//read in image data
 	if(filetype){
 	 image->readData(argv[1]);
-	 width = image->returnWidth();
-	 height = image->returnHeight();
-	 data = (float*)image->returnData();
+ } else {
+	 image->setData(scaleToPPM(data, 3*width*height));
+	 image->setWidth(width);
+	 image->setHeight(height);
  }
- SDL_Window *windowImage = SDL_CreateWindow("Loaded Image", 100, 100, width, height, SDL_WINDOW_SHOWN);
+ SDL_Window *windowImage = SDL_CreateWindow("Loaded Image", 100, 100, image->returnWidth(), image->returnHeight(), SDL_WINDOW_SHOWN);
  if (windowImage == NULL){
 	 logSDLError(std::cout, "CreateWindowImage");
 	 SDL_Quit();
@@ -257,9 +228,9 @@ int main(int argc, char** argv) {
 
   //Initialize the texture.  SDL_PIXELFORMAT_RGB24 specifies 3 bytes per
   //pixel, one per color channel
-	imageTexture = SDL_CreateTexture(rendererImage,SDL_PIXELFORMAT_RGB24,SDL_TEXTUREACCESS_STATIC,width,height);
+	imageTexture = SDL_CreateTexture(rendererImage,SDL_PIXELFORMAT_RGB24,SDL_TEXTUREACCESS_STATIC,image->returnWidth(),image->returnHeight());
 	//Copy the raw data array into the texture.
-	SDL_UpdateTexture(imageTexture, NULL, data, 3*width);
+	SDL_UpdateTexture(imageTexture, NULL, image->returnData(), 3*image->returnWidth());
   if (imageTexture == NULL){
     logSDLError(std::cout, "CreateImageTextureFromSurface");
   }
@@ -324,7 +295,8 @@ int main(int argc, char** argv) {
 		if(!filetype){
 			if(bilinear) toneMapFiltered(data, gamma, width * height, width, height);
 			else toneMap(data, gamma, width * height);
-			SDL_UpdateTexture(imageTexture, NULL, data, 3*width);
+			SDL_UpdateTexture(imageTexture, NULL, scaleToPPM(data, 3*width*height), 3*width);
+			image->setData(scaleToPPM(data, 3*width*height));
 			//render loaded texture here
 			renderTexture(imageTexture, rendererImage, 0, 0);
 			//Update the screen
@@ -346,8 +318,9 @@ int main(int argc, char** argv) {
 	SDL_DestroyWindow(windowImage);
 	SDL_Quit();
 
-	if(filetype) image->writeData(argv[2]);
-	else writeRGBE(argv[2], width, height, data);
+	image->writeData(argv[2]);
+
+	delete image;
 
   return 0;
 }
