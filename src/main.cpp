@@ -163,7 +163,7 @@ float* toneMapFiltered(float* data, int size, int width, int height){
 		lumData[i] = (1.0 / 61.0) * (20.0 * r + 40.0 * g + b);
 	}
 	convolution(lumData, width, height, con);
-	gamma = log(5)/(max_element(con, con + size) - min_element(con, con + size));
+	gamma = log(5.0)/(max_element(con, con + size) - min_element(con, con + size));
 	cout << "gamma: " << gamma << endl;
 	//gamma = 1.0;
 	for(i = 0; i < size; i++){
