@@ -45,10 +45,10 @@ void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y){
 	SDL_RenderCopy(ren, tex, NULL, &dst);
 }
 
-float convolution(float* data, int loc, int width, int height){
+void convolution(float* data, int width, int height, float* out){
 	float tempData[width][height];
 	float kernel[5][5];
-	int newLocA, newLocB, i, j, k = 0;
+	int i, j, a, k = 0, b = 0;
 	float w, sum = 0.0;
 	for(i = 0; i < 5; i++){
 		for(j = 0; j < 5; j++){
@@ -58,30 +58,31 @@ float convolution(float* data, int loc, int width, int height){
 	for(i = 0; i < height; i++){
 		for(j = 0; j < width; j++){
 			tempData[i][j] = data[k];
-			if(k == loc){
-				newLocA = i;
-				newLocB = j;
-			}
 			k++;
 		}
 	}
-	for(i = (newLocA - 2); i < (newLocA + 2); i++){
-		for(j = (newLocB - 2); j < (newLocB + 2); j++){
-			w = tempData[newLocA][newLocB] - tempData[i][j];
-			w = w * w;
-			if(w < 0.0) w = 0.0;
-			else if (w > 1.0) w = 1.0;
-			w = exp(-1 * w);
-			if(i < 0 && j < 0) sum = sum + w * tempData[abs(i)][abs(j)] * kernel[i - newLocA][j - newLocB];
-			else if (i < 0 && j < width) sum = sum + w * tempData[abs(i)][j] * kernel[i - newLocA][j - newLocB];
-			else if (i < height && j < 0) sum = sum + w * tempData[i][abs(j)] * kernel[i - newLocA][j - newLocB];
-			else if (i > height && j > width) sum = sum + w * tempData[(newLocA - i) + height][(newLocB - j) + width] * kernel[i - newLocA][j - newLocB];
-			else if (i > height) sum = sum + w * tempData[(newLocA - i) + height][j] * kernel[i - newLocA][j - newLocB];
-			else if (j > width) sum = sum + w * tempData[i][(newLocB - j) + width] * kernel[i - newLocA][j - newLocB];
-			else sum = sum + w * tempData[i][j] * kernel[i - newLocA][j - newLocB];
+	for(k = 0; k < height; k++){
+		for(a = 0; a < width; a++){
+			for(i = (k - 2); i < (k + 2); i++){
+				for(j = (a - 2); j < (a + 2); j++){
+					w = tempData[k][a] - tempData[i][j];
+					w = w * w;
+					if(w < 0.0) w = 0.0;
+					else if (w > 1.0) w = 1.0;
+					w = exp(-1 * w);
+					if(i < 0 && j < 0) sum = sum + w * tempData[abs(i)][abs(j)] * kernel[i - k][j - a];
+					else if (i < 0 && j < width) sum = sum + w * tempData[abs(i)][j] * kernel[i - k][j - a];
+					else if (i < height && j < 0) sum = sum + w * tempData[i][abs(j)] * kernel[i - k][j - a];
+					else if (i > height && j > width) sum = sum + w * tempData[(k - i) + height][(a - j) + width] * kernel[i - k][j - a];
+					else if (i > height) sum = sum + w * tempData[(k - i) + height][j] * kernel[i - k][j - a];
+					else if (j > width) sum = sum + w * tempData[i][(a - j) + width] * kernel[i - k][j - a];
+					else sum = sum + w * tempData[i][j] * kernel[i - k][j - a];
+				}
+			}
+			out[b] = sum;
+			b++;
 		}
 	}
-	return sum;
 }
 
 void writeRGBE(char* filename, int width, int height, float* data){
@@ -138,20 +139,23 @@ float* toneMap(float* data, float gamma, int size){
 	return newData;
 }
 
-float* toneMapFiltered(float* data, float gamma, int size, int width, int height){
+float* toneMapFiltered(float* data, int size, int width, int height){
 	float* lumData = new float[size];
 	float* lum2 = new float[size];
 	float* newData = new float[3*size];
-	float scale, B, S;
+	float scale, B, S, gamma;
+	float* con = new float[size];
+	convolution(data, width, height, con);
 	int i = 0;
 	float r, g, b;
+	gamma = log(50)/(max_element(con, con + size) - min_element(con, con + size));
 	for(i = 0; i < size; i++){
 		r = data[3 * i];
 		g = data[(3 * i) + 1];
 		b = data[(3 * i) + 2];
 		lumData[i] = (1.0 / 61.0) * (20.0 * r + 40.0 * g + b);
 		if(lumData[i] == 0.0) lumData[i] = -500.0;
-		B = convolution(lumData, i, width, height); //convolution
+		B = con[i];
 		S = log(lumData[i]) - B;
 		lum2[i] = exp(gamma * B + S);
 		scale = lum2[i] / lumData[i];
@@ -292,7 +296,7 @@ int main(int argc, char** argv) {
       }
     }
 		if(!filetype){
-			if(bilinear) newData = toneMapFiltered(data, gamma, width * height, width, height);
+			if(bilinear) newData = toneMapFiltered(data, width * height, width, height);
 			else newData = toneMap(data, gamma, width * height);
 			SDL_UpdateTexture(imageTexture, NULL, scaleToPPM(newData, 3*width*height), 3*width);
 			image->setData(scaleToPPM(newData, 3*width*height));
