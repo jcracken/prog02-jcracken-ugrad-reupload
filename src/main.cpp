@@ -97,7 +97,6 @@ float* readRGBE(char* filename, int* width, int* height){
 	float* data = new float[3 * *width * *height];
 	RGBE_ReadPixels_RLE(f, data, *width, *height);
 	fclose(f);
-	writeRGBE("temp.hdr", *width, *height, data);
 	return data;
 }
 
@@ -109,12 +108,13 @@ unsigned char* scaleToPPM(float* data, int size){
 	return newData;
 }
 
-void toneMap(float* data, float gamma, int size){
+float* toneMap(float* data, float gamma, int size){
 	float* lumData = new float[size];
 	float* lum2 = new float[size];
+	float* newData = new float[3*size];
 	float scale;
 	int i = 0;
-	unsigned char r, g, b;
+	float r, g, b;
 	for(i = 0; i < size; i++){
 		r = data[3 * i];
 		g = data[(3 * i) + 1];
@@ -123,7 +123,6 @@ void toneMap(float* data, float gamma, int size){
 		if(lumData[i] == 0.0) lumData[i] = -500.0;
 		lum2[i] = exp(gamma * log(lumData[i]));
 		scale = lum2[i] / lumData[i];
-		r = r * scale;
 		if(r > 1.0) r = 1.0;
 		else if (r < 0.0) r = 0.0;
 		g = g * scale;
@@ -132,18 +131,20 @@ void toneMap(float* data, float gamma, int size){
 		b = b * scale;
 		if(b > 1.0) b = 1.0;
 		else if (b < 0.0) b = 0.0;
-		data[3 * i] = r;
-		data[(3 * i) + 1] = g;
-		data[(3 * i) + 2] = b;
+		newData[3 * i] = r;
+		newData[(3 * i) + 1] = g;
+		newData[(3 * i) + 2] = b;
 	}
+	return newData;
 }
 
-void toneMapFiltered(float* data, float gamma, int size, int width, int height){
+float* toneMapFiltered(float* data, float gamma, int size, int width, int height){
 	float* lumData = new float[size];
 	float* lum2 = new float[size];
+	float* newData = new float[3*size];
 	float scale, B, S;
 	int i = 0;
-	unsigned char r, g, b;
+	float r, g, b;
 	for(i = 0; i < size; i++){
 		r = data[3 * i];
 		g = data[(3 * i) + 1];
@@ -167,6 +168,7 @@ void toneMapFiltered(float* data, float gamma, int size, int width, int height){
 		data[(3 * i) + 1] = g;
 		data[(3 * i) + 2] = b;
 	}
+	return newData;
 }
 
 ///
@@ -185,6 +187,7 @@ int main(int argc, char** argv) {
 	ppm* image = new ppm();
 	int width, height;
 	float* data;
+	float* newData;
 
   //Start up SDL and make sure it went ok
 	if (SDL_Init(SDL_INIT_VIDEO) != 0){
@@ -200,15 +203,14 @@ int main(int argc, char** argv) {
 		filetype = true;
 	} else {
 		data = readRGBE(argv[1], &width, &height);
-		writeRGBE("testing.hdr", width, height, data);
-		toneMap(data, gamma, width * height);
+		newData = toneMap(data, gamma, width * height);
 		filetype = false;
 	}
 	//read in image data
 	if(filetype){
 	 image->readData(argv[1]);
  } else {
-	 image->setData(scaleToPPM(data, 3*width*height));
+	 image->setData(scaleToPPM(newData, 3*width*height));
 	 image->setWidth(width);
 	 image->setHeight(height);
  }
@@ -254,11 +256,6 @@ int main(int argc, char** argv) {
   //Variables used in the rendering loop
   SDL_Event event;
 	bool quit = false;
-  bool leftMouseButtonDown = false;
-  int start_mouseX;
-  int start_mouseY;
-  float orig_x_angle;
-  float orig_y_angle;
 
 	while (!quit){
     //Grab the time for frame rate computation
@@ -281,7 +278,6 @@ int main(int argc, char** argv) {
             break;
 					case SDLK_LEFT:
 						gamma = gamma - 0.1;
-						if (gamma < 0.0) gamma = 0.0;
 						break;
 					case SDLK_RIGHT:
 						gamma = gamma + 0.1;
@@ -296,10 +292,10 @@ int main(int argc, char** argv) {
       }
     }
 		if(!filetype){
-			if(bilinear) toneMapFiltered(data, gamma, width * height, width, height);
-			else toneMap(data, gamma, width * height);
-			SDL_UpdateTexture(imageTexture, NULL, scaleToPPM(data, 3*width*height), 3*width);
-			image->setData(scaleToPPM(data, 3*width*height));
+			if(bilinear) newData = toneMapFiltered(data, gamma, width * height, width, height);
+			else newData = toneMap(data, gamma, width * height);
+			SDL_UpdateTexture(imageTexture, NULL, scaleToPPM(newData, 3*width*height), 3*width);
+			image->setData(scaleToPPM(newData, 3*width*height));
 			//render loaded texture here
 			renderTexture(imageTexture, rendererImage, 0, 0);
 			//Update the screen
@@ -312,6 +308,7 @@ int main(int argc, char** argv) {
     const double seconds = ( end - start ) / static_cast< double >( freq );
     //You may want to comment this line out for debugging purposes
     std::cout << "Frame time: " << seconds * 1000.0 << "ms" << std::endl;
+		cout << "Gamma: " << gamma << endl;
   }
 
   //After the loop finishes (when the window is closed, or escape is
