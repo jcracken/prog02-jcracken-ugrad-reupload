@@ -47,20 +47,18 @@ void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y){
 
 void convolution(float* data, int width, int height, float* out){
 	float tempData[height][width];
-	float kernel[5][5];
-	/*float kernel[5][5] = {
+	float kernel[5][5] = {
 		{1.0, 4.0, 7.0, 4.0, 1.0},
 		{4.0, 16.0, 26.0, 16.0, 4.0},
 		{7.0, 26.0, 41.0, 26.0, 7.0},
 		{4.0, 16.0, 26.0, 16.0, 4.0},
 		{1.0, 4.0, 7.0, 4.0, 1.0}
-	};*/
+	};
 	int i, j, a, k = 0, b = 0;
 	float w, sum = 0.0;
 	for(i = 0; i < 5; i++){
 		for(j = 0; j < 5; j++){
-			//kernel[i][j] = (1.0 / 273.0) * kernel[i][j];
-			kernel[i][j] = 1.0;
+			kernel[i][j] = (1.0 / 273.0) * kernel[i][j];
 		}
 	}
 	for(i = 0; i < height; i++){
@@ -148,11 +146,11 @@ float* toneMap(float* data, float gamma, int size){
 	return newData;
 }
 
-float* toneMapFiltered(float* data, int size, int width, int height){
+float* toneMapFiltered(float* data, float gamma, int size, int width, int height){
 	float* lumData = new float[size];
 	float* lum2 = new float[size];
 	float* newData = new float[3*size];
-	float scale, B, S, gamma;
+	float scale, B, S;
 	float* con = new float[size];
 	int i = 0;
 	float r, g, b;
@@ -161,18 +159,17 @@ float* toneMapFiltered(float* data, int size, int width, int height){
 		g = data[(3 * i) + 1];
 		b = data[(3 * i) + 2];
 		lumData[i] = (1.0 / 61.0) * (20.0 * r + 40.0 * g + b);
-		if(lumData[i] == 0.0) lumData[i] = -500.0;
 	}
 	convolution(lumData, width, height, con);
-	gamma = log(5)/(max_element(con, con + size) - min_element(con, con + size));
+	//gamma = log(5)/(max_element(con, con + size) - min_element(con, con + size));
 	//gamma = 1.0;
 	for(i = 0; i < size; i++){
 		r = data[3 * i];
 		g = data[(3 * i) + 1];
 		b = data[(3 * i) + 2];
 		B = con[i];
-		S = log(lumData[i]) - B;
-		lum2[i] = exp(gamma * B + S);
+		S = log(lumData[i] + FLT_MIN) - B;
+		lum2[i] = exp(gamma * B + S) - FLT_MIN;
 		scale = lum2[i] / lumData[i];
 		r = r * scale;
 		if(r > 1.0) r = 1.0;
@@ -297,15 +294,17 @@ int main(int argc, char** argv) {
             break;
 					case SDLK_LEFT:
 						gamma = gamma - 0.1;
-						newData = toneMap(data, gamma, width * height);
+						if (!bilinear) newData = toneMap(data, gamma, width * height);
+						else newData = toneMapFiltered(data, gamma, width * height, width, height);
 						break;
 					case SDLK_RIGHT:
 						gamma = gamma + 0.1;
-						newData = toneMap(data, gamma, width * height);
+						if (!bilinear) newData = toneMap(data, gamma, width * height);
+						else newData = toneMapFiltered(data, gamma, width * height, width, height);
 						break;
 					case SDLK_b:
 						if(!bilinear){
-							newData = toneMapFiltered(data, width * height, width, height);
+							newData = toneMapFiltered(data, gamma, width * height, width, height);
 							bilinear = true;
 						} else {
 							newData = toneMap(data, gamma, width * height);
@@ -331,7 +330,7 @@ int main(int argc, char** argv) {
     const static Uint64 freq = SDL_GetPerformanceFrequency();
     const double seconds = ( end - start ) / static_cast< double >( freq );
     //You may want to comment this line out for debugging purposes
-    std::cout << "Frame time: " << seconds * 1000.0 << "ms" << std::endl;
+    cout << "Frame time: " << seconds * 1000.0 << "ms" << endl;
 		cout << "Gamma: " << gamma << endl;
   }
 
