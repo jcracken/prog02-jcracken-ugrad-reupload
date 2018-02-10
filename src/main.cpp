@@ -48,18 +48,20 @@ void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y){
 float convolution(float* data, int loc, int width, int height){
 	float tempData[width][height];
 	float kernel[5][5];
-	int i, j, k = 0;
-	int newLocA = loc / width;
-	int newLocB = loc % width;
+	int newLocA, newLocB, i, j, k = 0;
 	float w, sum = 0.0;
-	for(i = 0; i < height; i++){
-		for(j = 0; j < width; j++){
+	for(i = 0; i < 5; i++){
+		for(j = 0; j < 5; j++){
 			kernel[i][j] = 1;
 		}
 	}
 	for(i = 0; i < height; i++){
 		for(j = 0; j < width; j++){
 			tempData[i][j] = data[k];
+			if(k == loc){
+				newLocA = i;
+				newLocB = j;
+			}
 			k++;
 		}
 	}
@@ -82,20 +84,21 @@ float convolution(float* data, int loc, int width, int height){
 	return sum;
 }
 
+void writeRGBE(char* filename, int width, int height, float* data){
+	FILE* f = fopen(filename,"wb");
+	RGBE_WriteHeader(f, width, height, NULL);
+	RGBE_WritePixels(f, data, width * height);
+	fclose(f);
+}
+
 float* readRGBE(char* filename, int* width, int* height){
 	FILE* f = fopen(filename,"rb");
 	RGBE_ReadHeader(f, width, height, NULL);
 	float* data = new float[3 * *width * *height];
 	RGBE_ReadPixels_RLE(f, data, *width, *height);
 	fclose(f);
+	writeRGBE("temp.hdr", *width, *height, data);
 	return data;
-}
-
-void writeRGBE(char* filename, int width, int height, float* data){
-	FILE* f = fopen(filename,"wb");
-	RGBE_WriteHeader(f, width, height, NULL);
-	RGBE_WritePixels(f, data, width * height);
-	fclose(f);
 }
 
 unsigned char* scaleToPPM(float* data, int size){
@@ -178,7 +181,7 @@ void toneMapFiltered(float* data, float gamma, int size, int width, int height){
 int main(int argc, char** argv) {
 
 	bool filetype, bilinear = false;
-	float gamma = 0.1;
+	float gamma = 1.0;
 	ppm* image = new ppm();
 	int width, height;
 	float* data;
