@@ -47,19 +47,20 @@ void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y){
 
 void convolution(float* data, int width, int height, float* out){
 	float tempData[height][width];
-	float kernel[5][5] = {
+	float kernel[5][5];
+	/*float kernel[5][5] = {
 		{1.0, 4.0, 7.0, 4.0, 1.0},
 		{4.0, 16.0, 26.0, 16.0, 4.0},
 		{7.0, 26.0, 41.0, 26.0, 7.0},
 		{4.0, 16.0, 26.0, 16.0, 4.0},
 		{1.0, 4.0, 7.0, 4.0, 1.0}
-	};
+	};*/
 	int i, j, a, k = 0, b = 0;
 	float w, sum = 0.0;
 	for(i = 0; i < 5; i++){
 		for(j = 0; j < 5; j++){
-			kernel[i][j] = (1.0 / 273.0) * kernel[i][j];
-			//kernel[i][j] = 1.0;
+			//kernel[i][j] = (1.0 / 273.0) * kernel[i][j];
+			kernel[i][j] = 1.0;
 		}
 	}
 	for(i = 0; i < height; i++){
@@ -129,9 +130,9 @@ float* toneMap(float* data, float gamma, int size){
 		g = data[(3 * i) + 1];
 		b = data[(3 * i) + 2];
 		lumData[i] = (1.0 / 61.0) * (20.0 * r + 40.0 * g + b);
-		if(lumData[i] == 0.0) lumData[i] = -500.0;
-		lum2[i] = exp(gamma * log(lumData[i]));
+		lum2[i] = exp(gamma * log(lumData[i] + FLT_MIN)) - FLT_MIN;
 		scale = lum2[i] / lumData[i];
+		r = r * scale;
 		if(r > 1.0) r = 1.0;
 		else if (r < 0.0) r = 0.0;
 		g = g * scale;
