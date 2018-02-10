@@ -59,6 +59,7 @@ void convolution(float* data, int width, int height, float* out){
 	for(i = 0; i < 5; i++){
 		for(j = 0; j < 5; j++){
 			kernel[i][j] = (1.0 / 273.0) * kernel[i][j];
+			//kernel[i][j] = 1.0;
 		}
 	}
 	for(i = 0; i < height; i++){
@@ -76,7 +77,6 @@ void convolution(float* data, int width, int height, float* out){
 					if(w < 0.0) w = 0.0;
 					else if (w > 1.0) w = 1.0;
 					w = exp(-1 * w);
-					w = 1.0;
 					if(i < 0 && j < 0) sum = sum + w * tempData[abs(i)][abs(j)] * kernel[i - (k - 2)][j - (a - 2)];
 					else if (i < 0 && j < width) sum = sum + w * tempData[abs(i)][j] * kernel[i - (k - 2)][j - (a - 2)];
 					else if (i < height && j < 0) sum = sum + w * tempData[i][abs(j)] * kernel[i - (k - 2)][j - (a - 2)];
@@ -164,6 +164,7 @@ float* toneMapFiltered(float* data, int size, int width, int height){
 	}
 	convolution(lumData, width, height, con);
 	gamma = log(5)/(max_element(con, con + size) - min_element(con, con + size));
+	//gamma = 1.0;
 	for(i = 0; i < size; i++){
 		r = data[3 * i];
 		g = data[(3 * i) + 1];
@@ -295,13 +296,20 @@ int main(int argc, char** argv) {
             break;
 					case SDLK_LEFT:
 						gamma = gamma - 0.1;
+						newData = toneMap(data, gamma, width * height);
 						break;
 					case SDLK_RIGHT:
 						gamma = gamma + 0.1;
+						newData = toneMap(data, gamma, width * height);
 						break;
 					case SDLK_b:
-						if(bilinear) bilinear = false;
-						else bilinear = true;
+						if(!bilinear){
+							newData = toneMapFiltered(data, width * height, width, height);
+							bilinear = true;
+						} else {
+							newData = toneMap(data, gamma, width * height);
+							bilinear = false;
+						}
 						break;
           default:
             break;
@@ -309,8 +317,6 @@ int main(int argc, char** argv) {
       }
     }
 		if(!filetype){
-			if(bilinear) newData = toneMapFiltered(data, width * height, width, height);
-			else newData = toneMap(data, gamma, width * height);
 			SDL_UpdateTexture(imageTexture, NULL, scaleToPPM(newData, 3*width*height), 3*width);
 			image->setData(scaleToPPM(newData, 3*width*height));
 			//render loaded texture here
