@@ -46,7 +46,7 @@ void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y){
 }
 
 void convolution(float* data, int width, int height, float* out){
-	float tempData[width][height];
+	float tempData[height][width];
 	float kernel[5][5];
 	int i, j, a, k = 0, b = 0;
 	float w, sum = 0.0;
@@ -145,16 +145,21 @@ float* toneMapFiltered(float* data, int size, int width, int height){
 	float* newData = new float[3*size];
 	float scale, B, S, gamma;
 	float* con = new float[size];
-	convolution(data, width, height, con);
 	int i = 0;
 	float r, g, b;
-	gamma = log(50)/(max_element(con, con + size) - min_element(con, con + size));
 	for(i = 0; i < size; i++){
 		r = data[3 * i];
 		g = data[(3 * i) + 1];
 		b = data[(3 * i) + 2];
 		lumData[i] = (1.0 / 61.0) * (20.0 * r + 40.0 * g + b);
 		if(lumData[i] == 0.0) lumData[i] = -500.0;
+	}
+	convolution(lumData, width, height, con);
+	gamma = log(50)/(max_element(con, con + size) - min_element(con, con + size));
+	for(i = 0; i < size; i++){
+		r = data[3 * i];
+		g = data[(3 * i) + 1];
+		b = data[(3 * i) + 2];
 		B = con[i];
 		S = log(lumData[i]) - B;
 		lum2[i] = exp(gamma * B + S);
@@ -168,9 +173,9 @@ float* toneMapFiltered(float* data, int size, int width, int height){
 		b = b * scale;
 		if(b > 1.0) b = 1.0;
 		else if (b < 0.0) b = 0.0;
-		data[3 * i] = r;
-		data[(3 * i) + 1] = g;
-		data[(3 * i) + 2] = b;
+		newData[3 * i] = r;
+		newData[(3 * i) + 1] = g;
+		newData[(3 * i) + 2] = b;
 	}
 	return newData;
 }
