@@ -70,17 +70,18 @@ void convolution(float* data, int width, int height, float* out){
 					if(w < 0.0) w = 0.0;
 					else if (w > 1.0) w = 1.0;
 					w = exp(-1 * w);
-					if(i < 0 && j < 0) sum = sum + w * tempData[abs(i)][abs(j)] * kernel[i - k][j - a];
-					else if (i < 0 && j < width) sum = sum + w * tempData[abs(i)][j] * kernel[i - k][j - a];
-					else if (i < height && j < 0) sum = sum + w * tempData[i][abs(j)] * kernel[i - k][j - a];
-					else if (i > height && j > width) sum = sum + w * tempData[(k - i) + height][(a - j) + width] * kernel[i - k][j - a];
-					else if (i > height) sum = sum + w * tempData[(k - i) + height][j] * kernel[i - k][j - a];
-					else if (j > width) sum = sum + w * tempData[i][(a - j) + width] * kernel[i - k][j - a];
+					if(i < 0 && j < 0) sum = sum + w * tempData[abs(i)][abs(j)] * kernel[i - (k - 2)][j - (a - 2)];
+					else if (i < 0 && j < width) sum = sum + w * tempData[abs(i)][j] * kernel[i - (k - 2)][j - (a - 2)];
+					else if (i < height && j < 0) sum = sum + w * tempData[i][abs(j)] * kernel[i - (k - 2)][j - (a - 2)];
+					else if (i > height && j > width) sum = sum + w * tempData[(k - i) + height][(a - j) + width] * kernel[i - (k - 2)][j - (a - 2)];
+					else if (i > height) sum = sum + w * tempData[(k - i) + height][j] * kernel[i - (k - 2)][j - (a - 2)];
+					else if (j > width) sum = sum + w * tempData[i][(a - j) + width] * kernel[i - (k - 2)][j - (a - 2)];
 					else sum = sum + w * tempData[i][j] * kernel[i - k][j - a];
 				}
 			}
 			out[b] = sum;
 			b++;
+			sum = 0.0;
 		}
 	}
 }
