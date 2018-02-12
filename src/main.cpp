@@ -59,6 +59,7 @@ void convolution(float* data, int width, int height, float* out){
 	for(i = 0; i < 5; i++){
 		for(j = 0; j < 5; j++){
 			kernel[i][j] = (1.0 / 273.0) * kernel[i][j];
+			kernel[i][j] = 1.0 / 25.0;
 		}
 	}
 	for(i = 0; i < height; i++){
@@ -76,14 +77,14 @@ void convolution(float* data, int width, int height, float* out){
 					if(w < 0.0) w = 0.0;
 					else if (w > 1.0) w = 1.0;
 					w = exp(-1 * w);
-					if(i < 0 && j < 0) sum = sum + w * tempData[i + 2][j + 2] * kernel[i - (k - 2)][j - (a - 2)];
-					else if (i < 0 && j < (width - 1)) sum = sum + w * tempData[i + 2][j] * kernel[i - (k - 2)][j - (a - 2)];
-					else if (i < (height - 1) && j < 0) sum = sum + w * tempData[i][j + 2] * kernel[i - (k - 2)][j - (a - 2)];
-					else if (i < 0 && j > (width - 1)) sum = sum + w * tempData[i + 2][j - 2] * kernel[i - (k - 2)][j - (a - 2)];
-					else if (i > (height - 1) && j < 0) sum = sum + w * tempData[i - 2][j + 2] * kernel[i - (k - 2)][j - (a - 2)];
-					else if (i > (height - 1) && j > (width - 1)) sum = sum + w * tempData[i - 2][j - 2] * kernel[i - (k - 2)][j - (a - 2)];
-					else if (i > (height - 1)) sum = sum + w * tempData[i - 2][j] * kernel[i - (k - 2)][j - (a - 2)];
-					else if (j > (width - 1)) sum = sum + w * tempData[i][j - 2] * kernel[i - (k - 2)][j - (a - 2)];
+					if(i < 0 && j < 0) sum = sum + w * tempData[i + 5][j + 5] * kernel[i - (k - 2)][j - (a - 2)];
+					else if (i < 0 && j < (width - 1)) sum = sum + w * tempData[i + 5][j] * kernel[i - (k - 2)][j - (a - 2)];
+					else if (i < (height - 1) && j < 0) sum = sum + w * tempData[i][j + 5] * kernel[i - (k - 2)][j - (a - 2)];
+					else if (i < 0 && j > (width - 1)) sum = sum + w * tempData[i + 5][j - 5] * kernel[i - (k - 2)][j - (a - 2)];
+					else if (i > (height - 1) && j < 0) sum = sum + w * tempData[i - 5][j + 5] * kernel[i - (k - 2)][j - (a - 2)];
+					else if (i > (height - 1) && j > (width - 1)) sum = sum + w * tempData[i - 5][j - 5] * kernel[i - (k - 2)][j - (a - 2)];
+					else if (i > (height - 1)) sum = sum + w * tempData[i - 5][j] * kernel[i - (k - 2)][j - (a - 2)];
+					else if (j > (width - 1)) sum = sum + w * tempData[i][j - 5] * kernel[i - (k - 2)][j - (a - 2)];
 					else sum = sum + w * tempData[i][j] * kernel[i - (k - 2)][j - (a - 2)];
 				}
 			}
@@ -148,11 +149,11 @@ float* toneMap(float* data, float gamma, int size){
 	return newData;
 }
 
-float* toneMapFiltered(float* data, int size, int width, int height){
+float* toneMapFiltered(float* data, float gamma, int size, int width, int height){
 	float* lumData = new float[size];
 	float* lum2 = new float[size];
 	float* newData = new float[3*size];
-	float scale, B, S, gamma;
+	float scale, B, S;
 	float* con = new float[size];
 	int i = 0;
 	float r, g, b;
@@ -163,8 +164,9 @@ float* toneMapFiltered(float* data, int size, int width, int height){
 		lumData[i] = (1.0 / 61.0) * (20.0 * r + 40.0 * g + b);
 	}
 	convolution(lumData, width, height, con);
-	gamma = log(5.0)/(max_element(con, con + size) - min_element(con, con + size));
-	cout << "gamma: " << gamma << endl;
+	//gamma = log(5.0)/(*(max_element(con, con + size)) - *(min_element(con, con + size)));
+	//cout << "gamma: " << gamma << endl;
+	//cout << "max: " << *(max_element(con, con + size)) << " min: " << *(min_element(con, con+ size)) << endl;
 	//gamma = 1.0;
 	for(i = 0; i < size; i++){
 		r = data[3 * i];
@@ -298,16 +300,16 @@ int main(int argc, char** argv) {
 					case SDLK_LEFT:
 						gamma = gamma - 0.1;
 						if (!bilinear) newData = toneMap(data, gamma, width * height);
-						else newData = toneMapFiltered(data, width * height, width, height);
+						else newData = toneMapFiltered(data, gamma, width * height, width, height);
 						break;
 					case SDLK_RIGHT:
 						gamma = gamma + 0.1;
 						if (!bilinear) newData = toneMap(data, gamma, width * height);
-						else newData = toneMapFiltered(data, width * height, width, height);
+						else newData = toneMapFiltered(data, gamma, width * height, width, height);
 						break;
 					case SDLK_b:
 						if(!bilinear){
-							newData = toneMapFiltered(data, width * height, width, height);
+							newData = toneMapFiltered(data, gamma, width * height, width, height);
 							bilinear = true;
 						} else {
 							newData = toneMap(data, gamma, width * height);
@@ -333,8 +335,8 @@ int main(int argc, char** argv) {
     const static Uint64 freq = SDL_GetPerformanceFrequency();
     const double seconds = ( end - start ) / static_cast< double >( freq );
     //You may want to comment this line out for debugging purposes
-    //cout << "Frame time: " << seconds * 1000.0 << "ms" << endl;
-		//cout << "Gamma: " << gamma << endl;
+    cout << "Frame time: " << seconds * 1000.0 << "ms" << endl;
+		cout << "Gamma: " << gamma << endl;
   }
 
   //After the loop finishes (when the window is closed, or escape is
