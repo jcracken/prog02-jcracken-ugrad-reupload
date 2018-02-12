@@ -1,15 +1,13 @@
 ### Assignment 02
 
-Currently working:
-1. Reading and displaying PPM images
-2. Writing PPMs, both PPM and converted HDR
-3. Tone mapping does *something*
-4. Written questions completed
+As of right now, the assignment is mostly completed. Some problems with bilinear filtering remain; hard to ascertain the cause. Some things to note:
 
-Not working:
-1. HDR image reading might be broken?
-2. HDR image writing might be broken? (not needed for assigment)
-3. Tone mapping w/o filter gives odd result
-4. Tone mapping w/ filter has a seg fault (think it has to do with edge case management)
+* When originally starting this assignment, I looked and saw that the load/write code for HDR images would be from third party code, and assumed it would be easier to handle most of the HDR specific functions and work in the main file instead of altering my PPM object code. This was probably a mistake, and there are a few functions in main that should probably be in ppm. Nonetheless, I tried to make it as modular as possible otherwise.
 
-https://homepages.inf.ed.ac.uk/rbf/HIPR2/gsmooth.htm
+* Usage is: prog02 input output filetype. I didn't make it very clear the last assignment whether to exclude the file extension or not. In that assignment, the user needed to exclude the file extension, but due to the fact that multiple file formats are being used here, the user must *include* the file extension.
+
+* You can alter gamma settings by hitting left and right on the keyboard to decrease and increase gamma by 0.1, respectively. Default gamma is at 1.0.
+
+* You can toggle the bilinear filter by hitting 'b'.
+
+* For the convolution boundary condition, it is handled by boundary padding through image reflection.
