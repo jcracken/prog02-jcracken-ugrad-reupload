@@ -407,24 +407,30 @@ int main(int argc, char** argv) {
             break;
 					case SDLK_LEFT:
 						//if left arrow pressed, decrease gamma by 0.1 and tone map image again
-						gamma = gamma - 0.1;
-						if (!bilinear) newData = toneMap(data, gamma, width * height);
-						else newData = toneMapFiltered(data, gamma, width * height, width, height);
+						if(!filetype){
+							gamma = gamma - 0.1;
+							if (!bilinear) newData = toneMap(data, gamma, width * height);
+							else newData = toneMapFiltered(data, gamma, width * height, width, height);
+						}
 						break;
 					case SDLK_RIGHT:
 						//same as for left arrow, but for right arrow and increase gamma instead of decrease
-						gamma = gamma + 0.1;
-						if (!bilinear) newData = toneMap(data, gamma, width * height);
-						else newData = toneMapFiltered(data, gamma, width * height, width, height);
+						if(!filetype){
+							gamma = gamma + 0.1;
+							if (!bilinear) newData = toneMap(data, gamma, width * height);
+							else newData = toneMapFiltered(data, gamma, width * height, width, height);
+						}
 						break;
 					case SDLK_b:
 						//if b pressed, toggle bilinear filtering--if it's not currently, filter it. otherwise, stop.
-						if(!bilinear){
-							newData = toneMapFiltered(data, gamma, width * height, width, height);
-							bilinear = true;
-						} else {
-							newData = toneMap(data, gamma, width * height);
-							bilinear = false;
+						if(!filetype){
+							if(!bilinear){
+								newData = toneMapFiltered(data, gamma, width * height, width, height);
+								bilinear = true;
+							} else {
+								newData = toneMap(data, gamma, width * height);
+								bilinear = false;
+							}
 						}
 						break;
           default:
