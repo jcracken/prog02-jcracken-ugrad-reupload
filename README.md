@@ -11,3 +11,7 @@ As of right now, the assignment is mostly completed. Some problems with bilinear
 * You can toggle the bilinear filter by hitting 'b'.
 
 * For the convolution boundary condition, it is handled by boundary padding through image reflection.
+
+## References
+
+I used https://homepages.inf.ed.ac.uk/rbf/HIPR2/gsmooth.htm for the 5x5 gaussian fliter kernel and http://dev.theomader.com/gaussian-kernel-calculator/ with a sigma of 10(?) for the 21x21.
