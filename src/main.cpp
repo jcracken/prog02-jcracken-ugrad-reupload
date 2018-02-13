@@ -98,7 +98,8 @@ void convolution(float* data, int width, int height, float* out, int radius, int
 				kernel[i][j] = calculatedEuler * exp(-1.0 * distance);
 				sum = sum + kernel[i][j];
 			} else {
-				//sharpen
+				if(i == radius && j == radius) kernel[i][j] = ((2.0 * radius + 1.0) * (2.0 * radius + 1.0)) - 1.0;
+				else kernel[i][j] = -1;
 			}
 		}
 	}
