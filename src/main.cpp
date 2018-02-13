@@ -117,12 +117,11 @@ void convolution(float* data, int width, int height, float* out){
 			for(i = (k - offset); i < (k + offset + 1); i++){
 				for(j = (a - offset); j < (a + offset + 1); j++){
 					//calculate weight for bilinear filter
-					w = tempData[k][a] - tempData[i][j];
+					w = tempData[k][a] - tempData[i][j] / 2.0;
 					w = w * w;
 					if(w < 0.0) w = 0.0;
 					else if (w > 1.0) w = 1.0;
-					w = exp(-1 * w);
-					w = 1.0;
+					w = exp(-1.0 * w);
 
 					//handling boundaries; uses boundary padding through reflection for its boundary condition
 					if(i < 0 && j < 0) sum = sum + w * tempData[i + offset][j + offset] * kernel[i - (k - offset)][j - (a - offset)];
