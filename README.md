@@ -1,6 +1,6 @@
 ### Assignment 02
 
-This is the undergrad assignment, attempted for extra credit. This code will therefore be messier than the graduate assignment, and has not been tested. I literally wrote the code, checked to make sure it compilied, and called it a day. Entire time spent from importing grad code to completion was about a few hours.
+This is the undergrad assignment, attempted for extra credit. This code will therefore be messier than the graduate assignment, and has not been tested. I literally wrote the code, checked to make sure it compilied, and called it a day. Entire time spent from importing grad code to completion was about an hour or so.
 
 Usage: prog02 input output
 
